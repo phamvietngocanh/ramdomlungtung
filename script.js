@@ -14,7 +14,6 @@ const namesContainer = document.getElementById("namesContainer");
 const wheelSection = document.getElementById("wheelSection");
 
 const wheel = document.getElementById("wheel");
-
 const result = document.getElementById("result");
 
 // ===== DATA =====
@@ -27,11 +26,8 @@ let isSpinning = false;
 // ===== RANDOM COLOR =====
 
 function randomColor() {
-
     const hue = Math.floor(Math.random() * 360);
-
     return `hsl(${hue},70%,55%)`;
-
 }
 
 // ===== CREATE INPUTS =====
@@ -39,353 +35,262 @@ function randomColor() {
 createBtn.addEventListener("click", createInputs);
 
 countInput.addEventListener("keydown", e => {
-
     if (e.key === "Enter") {
-
         createInputs();
-
     }
-
 });
 
 function createInputs() {
-
     error.textContent = "";
-
     namesContainer.innerHTML = "";
-
     wheelSection.classList.add("hidden");
-
     result.innerHTML = "";
 
     const count = Number(countInput.value);
 
     if (isNaN(count)) {
-
         error.textContent = "Hãy nhập số lượng.";
-
         return;
-
     }
 
     if (count < 2) {
-
         error.textContent = "Ít nhất phải có 2 đối tượng.";
-
         return;
-
     }
 
     if (count > 20) {
-
         error.textContent = "Chỉ được nhập tối đa 20 đối tượng.";
-
         return;
-
     }
 
     namesContainer.classList.remove("hidden");
 
     for (let i = 0; i < count; i++) {
-
         const row = document.createElement("div");
-
         row.className = "name-row";
-
         row.innerHTML = `
-
             <span>Tên ${i + 1}</span>
-
             <input
                 type="text"
                 class="player-input"
                 maxlength="40"
                 placeholder="Nhập tên">
-
         `;
-
         namesContainer.appendChild(row);
-
     }
 
     const button = document.createElement("button");
-
     button.textContent = "🎡 TẠO VÒNG QUAY";
-
     button.id = "generateWheel";
-
     button.onclick = prepareWheel;
-
     namesContainer.appendChild(button);
-
 }
 
 // ===== VALIDATE =====
 
 function prepareWheel() {
-
     error.textContent = "";
-
     result.innerHTML = "";
-
     players = [];
-
     colors = [];
 
     const inputs = document.querySelectorAll(".player-input");
-
     const used = new Set();
 
     for (const input of inputs) {
-
         const name = input.value.trim();
 
         if (!name) {
-
             error.textContent = "Không được để trống tên.";
-
             return;
-
         }
 
         const key = name.toLowerCase();
-
         if (used.has(key)) {
-
             error.textContent = "Tên bị trùng.";
-
             return;
-
         }
 
         used.add(key);
-
         players.push(name);
-
         colors.push(randomColor());
-
     }
 
     wheelSection.classList.remove("hidden");
 
+    currentRotation = 0;
+    wheel.style.transform = "rotate(0deg)";
+
     drawWheel();
+}
 
-    console.log(players);
-
-    console.log(colors);
 // ===== RANDOM =====
 
-function secureRandom(max){
-
+function secureRandom(max) {
     const array = new Uint32Array(1);
-
     crypto.getRandomValues(array);
-
     return array[0] % max;
-
 }
-    spinBtn.addEventListener("click", spin);
-    function spin(){
 
-    if(isSpinning) return;
+// ===== SPIN =====
 
-    if(players.length===0) return;
+spinBtn.addEventListener("click", spin);
 
-    isSpinning=true;
+function spin() {
+    if (isSpinning) return;
+    if (players.length === 0) return;
 
-    spinBtn.disabled=true;
+    isSpinning = true;
+    spinBtn.disabled = true;
+    result.innerHTML = "";
 
-    result.innerHTML="";
+    const winnerIndex = secureRandom(players.length);
+    const slice = 360 / players.length;
+    const centerAngle = winnerIndex * slice + slice / 2;
+    const extraTurns = 6 + secureRandom(3);
 
-    const winnerIndex=secureRandom(players.length);
+    const finalRotation =
+        currentRotation +
+        extraTurns * 360 +
+        (360 - centerAngle);
 
-    const slice=360/players.length;
+    currentRotation = finalRotation;
+    wheel.style.transform = `rotate(${finalRotation}deg)`;
 
-    const centerAngle=winnerIndex*slice+slice/2;
-
-    const extraTurns=6+secureRandom(3);
-
-    const finalRotation=
-
-        currentRotation+
-
-        extraTurns*360+
-
-        (360-centerAngle);
-
-    currentRotation=finalRotation;
-
-    wheel.style.transform=
-
-        `rotate(${finalRotation}deg)`;
-
-    wheel.ontransitionend=()=>{
-
-        wheel.ontransitionend=null;
-
+    wheel.ontransitionend = () => {
+        wheel.ontransitionend = null;
         finishSpin(winnerIndex);
-
     };
-function spin(){
-
-    if(isSpinning) return;
-
-    if(players.length===0) return;
-
-    isSpinning=true;
-
-    spinBtn.disabled=true;
-
-    result.innerHTML="";
-
-    const winnerIndex=secureRandom(players.length);
-
-    const slice=360/players.length;
-
-    const centerAngle=winnerIndex*slice+slice/2;
-
-    const extraTurns=6+secureRandom(3);
-
-    const finalRotation=
-
-        currentRotation+
-
-        extraTurns*360+
-
-        (360-centerAngle);
-
-    currentRotation=finalRotation;
-
-    wheel.style.transform=
-
-        `rotate(${finalRotation}deg)`;
-
-    wheel.ontransitionend=()=>{
-
-        wheel.ontransitionend=null;
-
-        finishSpin(winnerIndex);
-
-    };
-
 }
+
+function finishSpin(winnerIndex) {
+    isSpinning = false;
+
+    const winner = players[winnerIndex];
+
+    result.innerHTML = `
+        <div>🎉 Người được chọn là:</div>
+        <div id="winnerName">${winner}</div>
+    `;
+
+    if (removeWinner.checked) {
+        players.splice(winnerIndex, 1);
+        colors.splice(winnerIndex, 1);
+
+        if (players.length === 0) {
+            spinBtn.disabled = true;
+            return;
+        }
+
+        if (players.length === 1) {
+            setTimeout(() => {
+                drawWheel();
+                result.innerHTML = `
+                    <div>🎉 Đã chọn hết tất cả đối tượng.</div>
+                    <div id="winnerName">${players[0]}</div>
+                `;
+                spinBtn.disabled = true;
+            }, 300);
+            return;
+        }
+
+        setTimeout(() => {
+            drawWheel();
+        }, 300);
+    } else {
+        spinBtn.disabled = false;
+    }
 }
-}
+
 // ===== SVG WHEEL =====
 
 function polarToCartesian(radius, angle) {
-
     return {
-
         x: radius * Math.cos(angle),
-
         y: radius * Math.sin(angle)
-
     };
-
 }
 
-function createSlice(startAngle, endAngle, color) {
-
+function createSlice(startAngle, endAngle) {
     const radius = 240;
-
     const start = polarToCartesian(radius, startAngle);
-
     const end = polarToCartesian(radius, endAngle);
-
     const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
 
     return `
-
         M 0 0
         L ${start.x} ${start.y}
         A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}
         Z
-
     `;
+}
 
+function fitText(name) {
+    const len = name.length;
+    if (len <= 8) return 16;
+    if (len <= 12) return 14;
+    if (len <= 16) return 12;
+    return 10;
 }
 
 function drawWheel() {
-
     wheel.innerHTML = "";
 
     const count = players.length;
+    if (count === 0) {
+        spinBtn.disabled = true;
+        return;
+    }
 
     const slice = (Math.PI * 2) / count;
 
     for (let i = 0; i < count; i++) {
-
         const start = -Math.PI / 2 + i * slice;
-
         const end = start + slice;
 
-        const path = document.createElementNS(
-
-            "http://www.w3.org/2000/svg",
-
-            "path"
-
-        );
-
-        path.setAttribute(
-
-            "d",
-
-            createSlice(start, end, colors[i])
-
-        );
-
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", createSlice(start, end));
         path.setAttribute("fill", colors[i]);
-
         path.setAttribute("stroke", "#ffffff");
-
         path.setAttribute("stroke-width", "2");
-
         wheel.appendChild(path);
 
-        //--------------------------------------
-
         const mid = (start + end) / 2;
-
         const pos = polarToCartesian(150, mid);
 
-        const text = document.createElementNS(
-
-            "http://www.w3.org/2000/svg",
-
-            "text"
-
-        );
-
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
         text.setAttribute("x", pos.x);
-
         text.setAttribute("y", pos.y);
-
         text.setAttribute(
-
             "transform",
-
             `rotate(${mid * 180 / Math.PI + 90} ${pos.x} ${pos.y})`
-
         );
-
         text.setAttribute("fill", "white");
-
         text.setAttribute("font-weight", "bold");
-
-        text.setAttribute("font-size", "16");
-
+        text.setAttribute("font-size", fitText(players[i]));
         text.setAttribute("text-anchor", "middle");
-
         text.setAttribute("dominant-baseline", "middle");
-
         text.textContent = players[i].toUpperCase();
-
         wheel.appendChild(text);
-
     }
 
-    spinBtn.disabled = false;
-
+    spinBtn.disabled = players.length < 2;
 }
+
+// ===== RESET =====
+
+resetBtn.addEventListener("click", () => {
+    countInput.value = "";
+    namesContainer.innerHTML = "";
+    namesContainer.classList.add("hidden");
+    wheelSection.classList.add("hidden");
+    error.textContent = "";
+    result.innerHTML = "";
+    players = [];
+    colors = [];
+    currentRotation = 0;
+    isSpinning = false;
+    wheel.innerHTML = "";
+    wheel.style.transform = "rotate(0deg)";
+    spinBtn.disabled = true;
+});
