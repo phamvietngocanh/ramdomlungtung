@@ -22,6 +22,7 @@ const result = document.getElementById("result");
 let players = [];
 let colors = [];
 let currentRotation = 0;
+let isSpinning = false;
 
 // ===== RANDOM COLOR =====
 
@@ -167,10 +168,108 @@ function prepareWheel() {
 
     wheelSection.classList.remove("hidden");
 
+    drawWheel();
+
     console.log(players);
 
     console.log(colors);
+// ===== RANDOM =====
 
+function secureRandom(max){
+
+    const array = new Uint32Array(1);
+
+    crypto.getRandomValues(array);
+
+    return array[0] % max;
+
+}
+    spinBtn.addEventListener("click", spin);
+    function spin(){
+
+    if(isSpinning) return;
+
+    if(players.length===0) return;
+
+    isSpinning=true;
+
+    spinBtn.disabled=true;
+
+    result.innerHTML="";
+
+    const winnerIndex=secureRandom(players.length);
+
+    const slice=360/players.length;
+
+    const centerAngle=winnerIndex*slice+slice/2;
+
+    const extraTurns=6+secureRandom(3);
+
+    const finalRotation=
+
+        currentRotation+
+
+        extraTurns*360+
+
+        (360-centerAngle);
+
+    currentRotation=finalRotation;
+
+    wheel.style.transform=
+
+        `rotate(${finalRotation}deg)`;
+
+    wheel.ontransitionend=()=>{
+
+        wheel.ontransitionend=null;
+
+        finishSpin(winnerIndex);
+
+    };
+function spin(){
+
+    if(isSpinning) return;
+
+    if(players.length===0) return;
+
+    isSpinning=true;
+
+    spinBtn.disabled=true;
+
+    result.innerHTML="";
+
+    const winnerIndex=secureRandom(players.length);
+
+    const slice=360/players.length;
+
+    const centerAngle=winnerIndex*slice+slice/2;
+
+    const extraTurns=6+secureRandom(3);
+
+    const finalRotation=
+
+        currentRotation+
+
+        extraTurns*360+
+
+        (360-centerAngle);
+
+    currentRotation=finalRotation;
+
+    wheel.style.transform=
+
+        `rotate(${finalRotation}deg)`;
+
+    wheel.ontransitionend=()=>{
+
+        wheel.ontransitionend=null;
+
+        finishSpin(winnerIndex);
+
+    };
+
+}
+}
 }
 // ===== SVG WHEEL =====
 
